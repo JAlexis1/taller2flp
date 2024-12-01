@@ -2,7 +2,8 @@
 
 ;; Integrantes: Nicolas Rodriguez Romero # 2266071
 ;;              Jhon Alexis Ruiz Quiceno # 2266014
-;;              Michael Rodriguez Arana  # 
+;;              Michael Rodriguez Arana  # 2266193
+
 (require rackunit)
 
 (define especificacion-lexica
@@ -43,8 +44,9 @@
     (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
     (expresion ("set" identificador "=" expresion) set-exp)
 
-    ;;cons, empty
+    ;;List-exp
     (expresion ("cons" "("expresion expresion")") list-exp)
+    ;List-empty-exp
     (expresion ("empty") list-empty-exp)
 
     ;;condicionales
@@ -58,6 +60,7 @@
     (primitiva ("/") div-prim)
     (primitiva ("add1") add-prim)
     (primitiva ("sub1") sub-prim)
+    ;;Nuevas primitivas
     (primitiva ("length") length-prim)
     (primitiva ("first") first-prim)
     (primitiva ("rest") rest-prim)
@@ -266,21 +269,17 @@
                )
       ;;cons
       (list-exp (exp1 exp2)
-                (let 
-                 ( 
-                 (exp1 (evaluar-expresion exp1 amb))
-                 (exp2 (evaluar-expresion exp2 amb))
-                 )
-                (if (not (list? exp2))
-                    (eopl:error (string-append "Error: " (number->string exp2) " no es una lista"))
-                (append (list exp1) exp2)
-                )
-                ))
-                              
+          (if (not (list? (evaluar-expresion exp2 amb)))
+              (eopl:error (string-append "Error: " (number->string (evaluar-expresion exp2 amb))  " no es una lista"))
+              (append (list (evaluar-expresion exp1 amb)) (evaluar-expresion exp2 amb))
+          )
+      )
+                   
       ;;empty
       (list-empty-exp ()
                  empty
                  )
+                 
       ;;cond
       (cond-exp (exp-cond exp-true exp-false)
                 (letrec 

@@ -2,7 +2,7 @@
 
 ;; Integrantes: Nicolas Rodriguez Romero # 2266071
 ;;              Jhon Alexis Ruiz Quiceno # 2266014
-;;              Michael Rodriguez Arana  # 
+;;              Michael Rodriguez Arana  # 2266193
 
 (require rackunit "5.InterpretadorAsignacion.rkt")
 
@@ -82,4 +82,3 @@
   8
 )
 (check-equal? (evaluar-programa cond_else) expected_cond_else)
-
