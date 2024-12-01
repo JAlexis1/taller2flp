@@ -1,4 +1,10 @@
 #lang eopl
+
+;; Integrantes: Nicolas Rodriguez Romero # 2266071
+;;              Jhon Alexis Ruiz Quiceno # 2266014
+;;              Michael Rodriguez Arana  # 
+(require rackunit)
+
 (define especificacion-lexica
   '(
     (espacio-blanco (whitespace) skip)
@@ -37,6 +43,13 @@
     (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
     (expresion ("set" identificador "=" expresion) set-exp)
 
+    ;;cons, empty
+    (expresion ("cons" "("expresion expresion")") list-exp)
+    (expresion ("empty") list-empty-exp)
+
+    ;;condicionales
+    (expresion ("cond" (arbno expresion "==>" expresion ) "else" "==>" expresion "end") cond-exp)
+
     ;;Primitivas
     (expresion (primitiva "(" (separated-list expresion ",") ")") prim-exp)
     (primitiva ("+") sum-prim)
@@ -45,6 +58,12 @@
     (primitiva ("/") div-prim)
     (primitiva ("add1") add-prim)
     (primitiva ("sub1") sub-prim)
+    (primitiva ("length") length-prim)
+    (primitiva ("first") first-prim)
+    (primitiva ("rest") rest-prim)
+    (primitiva ("nth") nth-prim)
+    (primitiva ("cons1") cons-prim)
+    (primitiva ("empty1") empty-prim)
     ;;primitivas booleanas
     (primitiva (">") mayor-prim)
     (primitiva (">=") mayorigual-prim)
@@ -245,11 +264,42 @@
                   (evaluar-expresion exp amb))
                  1)
                )
-      )
-    
-
+      ;;cons
+      (list-exp (exp1 exp2)
+                (let 
+                 ( 
+                 (exp1 (evaluar-expresion exp1 amb))
+                 (exp2 (evaluar-expresion exp2 amb))
+                 )
+                (if (not (list? exp2))
+                    (eopl:error (string-append "Error: " (number->string exp2) " no es una lista"))
+                (append (list exp1) exp2)
+                )
+                ))
+                              
+      ;;empty
+      (list-empty-exp ()
+                 empty
+                 )
+      ;;cond
+      (cond-exp (exp-cond exp-true exp-false)
+                (letrec 
+                (
+                (ev-cond (lambda (exp-cond exp-true)
+                            (cond 
+                                [(null? exp-cond) (evaluar-expresion exp-false amb)]
+                                [(not (= (evaluar-expresion (car exp-cond) amb) 0)) (evaluar-expresion (car exp-true) amb)]
+                                [else (ev-cond (cdr exp-cond) (cdr exp-true))]
+                                ))
+                )
+                )
+                (ev-cond exp-cond exp-true)
+                )
+                
+      ) 
     )
   )
+) 
 
 ;;Manejo de primitivas
 (define evaluar-primitiva
@@ -266,6 +316,13 @@
       (menor-prim () (< (car lval) (cadr lval)))
       (menorigual-prim () (<= (car lval) (cadr lval)))
       (igual-prim () (= (car lval) (cadr lval)))
+
+      (length-prim () (length (car lval)))
+      (first-prim () (car (car lval)))
+      (rest-prim () (cdr (car lval)))
+      (nth-prim () (list-ref (car lval) (cadr lval)))
+      (cons-prim () (cons (car lval) (cadr lval)))
+      (empty-prim () (null? (car lval)))
       )
     )
   )
@@ -291,7 +348,6 @@
            (amb-creation ambiente?)))
 
 ;;Referencias
-
 (define-datatype referencia referencia?
   (a-ref (pos number?)
          (vec vector?)))
@@ -318,12 +374,20 @@
       (a-ref (pos vec)
              (vector-set! vec pos val)))))
 
+;; scan&parse
+
+(define scan&parse
+  (sllgen:make-string-parser especificacion-lexica especificacion-gramatical))
+
+
 
 ;;Interpretador
 (define interpretador
   (sllgen:make-rep-loop "-->" evaluar-programa
                         (sllgen:make-stream-parser
                          especificacion-lexica especificacion-gramatical)))
+
+(provide (all-defined-out)) 
 
 
 (interpretador)
